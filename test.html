@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>测试路由懒加载和模板编译解析的关系</title>
     <script src="./vue.js"></script>
-    <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+    <script src="./vue-router.js"></script>
 </head>
 <body>
 <div id="app">
@@ -26,7 +26,7 @@
     //     { path: '/test1', component: test1 },
     //     { path: '/test2', component: test2 }
     // ]
-
+    let fileLoaded = {}
     // 2. 异步测试
     const createLabel = (src) => {
         let script = document.createElement('script')
@@ -34,30 +34,59 @@
         script.src = src
         return script
     }
+    const loadFile = (filePath) => {
+        return new Promise((resolve, reject) => {
+            if (fileLoaded[filePath]) {
+               resolve(fileLoaded[filePath])
+            }
+            import(filePath).then(res => {
+                fileLoaded[filePath] = res.default
+                resolve(fileLoaded[filePath])
+            }).catch(err => {
+                console.log(err)
+                reject(err)
+            })
+        })
+    }
+    function getElementByAttr(tag, dataAttr, dataValue) {
+        var aElements = document.getElementsByTagName(tag);
+        var aEle = false;
+        for(var i = 0; i < aElements.length; i++) {
+            if( aElements[i].getAttribute(dataAttr) == dataValue) {
+                aEle = true
+            }
+        }
+        return aEle;
+    }
+    // const routes = [
+    //     { path: '/test1', component: () => {
+    //             let temp;
+    //             return new Promise((resolve, reject) => {
+    //                 if (typeof (temp) !== 'undefined') return resolve(temp)
+    //                 let _script = createLabel('./template.js')
+    //                 document.head.appendChild(_script)
+    //                 _script.onerror = reject
+    //                 _script.onload = function () {
+    //                     resolve(temp)
+    //                 }
+    //             })
+    //     }},
+    //     { path: '/test2', component: () => {
+    //             return new Promise((resolve, reject) => {
+    //                 if (typeof (test2) !== 'undefined') return resolve(test2)
+    //                 let _script = createLabel('./template1.js')
+    //                 document.head.appendChild(_script)
+    //                 _script.onerror = reject
+    //                 _script.onload = function () {
+    //                     resolve(test2)
+    //                     // alert('加载成功')
+    //                 }
+    //             })
+    //     }},
+    // ]
     const routes = [
-        { path: '/test1', component: () => {
-                return new Promise((resolve, reject) => {
-                    if (typeof (test1) !== 'undefined') return resolve(test1)
-                    let _script = createLabel('./template.js')
-                    document.head.appendChild(_script)
-                    _script.onerror = reject
-                    _script.onload = function () {
-                        resolve(test1)
-                    }
-                })
-        }},
-        { path: '/test2', component: () => {
-                return new Promise((resolve, reject) => {
-                    if (typeof (test2) !== 'undefined') return resolve(test2)
-                    let _script = createLabel('./template1.js')
-                    document.head.appendChild(_script)
-                    _script.onerror = reject
-                    _script.onload = function () {
-                        resolve(test2)
-                        // alert('加载成功')
-                    }
-                })
-        }},
+        { path: '/test1', component: () => loadFile('./template.js')},
+        { path: '/test2', component: () => loadFile('./template1.js')},
     ]
     // 3. 创建 router 实例，然后传 `routes` 配置
     const router = new VueRouter({

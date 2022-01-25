@@ -1,1 +1,2 @@
-window.test1 = { template: '<div>test1路由</div>' }
+// export default { template: '<div>test1路由</div>' }
+const temp = { template: '<div>test1路由</div>' }
